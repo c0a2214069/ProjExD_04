@@ -149,6 +149,7 @@ class Beam(pg.sprite.Sprite):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
+        引数 ang：NeoBeam時のインスタンスの角度差
         """
         super().__init__()
         self.vx, self.vy = bird.get_direction()
