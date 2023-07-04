@@ -153,7 +153,7 @@ class Beam(pg.sprite.Sprite):
         super().__init__()
         self.vx, self.vy = bird.get_direction()
         angle = math.degrees(math.atan2(-self.vy, self.vx))+ang
-        self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle+ang, 2.0)
+        self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
         self.rect = self.image.get_rect()
@@ -175,8 +175,6 @@ class NeoBeam:
     """
     弾幕機能に関するクラス
     複数方向のビームを作成する
-    引数１ bird：ビームを発射するこうかとん
-    引数２ num：一度に発射されるビームの数
     """
     def __init__(self, bird: Bird, num: int):
         """
