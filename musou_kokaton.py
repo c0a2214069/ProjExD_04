@@ -3,12 +3,14 @@ import random
 import sys
 import time
 
+
 import pygame as pg
 from pygame.sprite import AbstractGroup
 
 
 WIDTH = 1600  # ゲームウィンドウの幅
 HEIGHT = 900  # ゲームウィンドウの高さ
+
 
 
 def check_bound(obj: pg.Rect) -> tuple[bool, bool]:
@@ -72,6 +74,7 @@ class Bird(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = xy
         self.speed = 10
+        
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -297,6 +300,11 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_CAPSLOCK and len(shields) == 0 and score.score >= 50:
                 shields.add(Shield(bird, 400))
                 score.score -= 50
+                beams.add(Beam(bird)) 
+            if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
+                bird.speed = 20
+            elif event.type == pg.KEYUP and event.key == pg.K_LSHIFT:
+                bird.speed = 10
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
