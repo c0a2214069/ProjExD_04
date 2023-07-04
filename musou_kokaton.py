@@ -159,14 +159,15 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, ang: float=0):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
+        引数 ang：NeoBeam時のインスタンスの角度差
         """
         super().__init__()
         self.vx, self.vy = bird.get_direction()
-        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle = math.degrees(math.atan2(-self.vy, self.vx))+ang
         self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -184,6 +185,27 @@ class Beam(pg.sprite.Sprite):
         if check_bound(self.rect) != (True, True):
             self.kill()
 
+
+class NeoBeam:
+    """
+    弾幕機能に関するクラス
+    複数方向のビームを作成する
+    """
+    def __init__(self, bird: Bird, num: int):
+        """
+        引数１ bird：ビームを発射するこうかとん
+        引数２ num：一度に発射されるビームの数
+        """
+        self.bird = bird
+        self.num = num
+    
+    def gen_beams(self):
+        """
+        こうかとんが向いている方向の＋-50~50度の範囲でnum個作成されたビームのリストを返すメソッド
+        """
+        beam_list = []
+        [beam_list.append(Beam(self.bird, angle)) for angle in range(-50, 51, int(100/(self.num-1)))]
+        return beam_list
 
 class Explosion(pg.sprite.Sprite):
     """
@@ -304,7 +326,11 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
-            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE and key_lst[pg.K_LSHIFT]:
+                neobeam = NeoBeam(bird, 5)
+                beam_list = neobeam.gen_beams()
+                beams.add(beam_list)
+            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.score > 100:
                 score.score -=100
