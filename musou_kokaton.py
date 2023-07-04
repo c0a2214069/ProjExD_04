@@ -104,20 +104,10 @@ class Bird(pg.sprite.Sprite):
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
-        if self.state == "hyper":
-            self.image = pg.transform.laplacian(self.image)
-            self.hyper_life -= 1
-        if self.hyper_life < 0:
-            self.change_state("normal",-1) 
         screen.blit(self.image, self.rect)
     
     def get_direction(self) -> tuple[int, int]:
         return self.dire
-    
-    def change_state(self,state:str,hyper_life:int):
-        self.hyper_life = hyper_life
-        self.state = state
-        
     
 
 class Bomb(pg.sprite.Sprite):
@@ -283,8 +273,25 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         screen.blit(self.image, self.rect)
-
-
+class NeoGravity(pg.sprite.Sprite):
+    """
+    重力場に関するクラス
+    """
+    def __init__(self,life:int):
+        super().__init__()
+        print(WIDTH)
+        self.image = pg.Surface((WIDTH,HEIGHT))
+        self.image.set_alpha(200)
+        self.image.set_colorkey((0,0,0))
+        pg.draw.rect(self.image,(10,10,10),pg.Rect(0,0,WIDTH,HEIGHT))
+        self.rect = self.image.get_rect()
+        self.rect.center = (WIDTH/2,HEIGHT/2)
+        self.life = life
+    def update(self):
+        self.life -= 1
+        #screen.blit(self.imgae,self.rect)
+        if self.life < 0:
+            self.kill()
 class Shield(pg.sprite.Sprite):
     """
     爆弾を防ぐシールドに関するクラス 
@@ -305,8 +312,6 @@ class Shield(pg.sprite.Sprite):
         self.life -= 1
         if(self.life <= 0):
             self.kill()
-        
-            
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -318,6 +323,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    neogravity = pg.sprite.Group()
     shields = pg.sprite.Group()
     tmr = 0
     clock = pg.time.Clock()
@@ -332,6 +338,9 @@ def main():
                 beams.add(beam_list)
             elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN and score.score > 200:
+                score.score -= 200
+                neogravity.add(NeoGravity(400))
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.score > 100:
                 score.score -=100
                 bird.change_state("hyper",500)
@@ -344,6 +353,7 @@ def main():
             elif event.type == pg.KEYUP and event.key == pg.K_LSHIFT:
                 bird.speed = 10
         screen.blit(bg_img, [0, 0])
+
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
@@ -360,7 +370,13 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
-
+        for neo in pg.sprite.groupcollide(bombs,neogravity,True,False).keys():
+            exps.add(Explosion(neo,50))
+            score.score_up(1)  # 1点アップ
+        for neo in pg.sprite.groupcollide(emys, neogravity, True, False).keys():
+            exps.add(Explosion(neo, 100))  # 爆発エフェクト
+            score.score_up(10)  # 10点アップ
+            bird.change_img(6, screen)  # こうかとん喜びエフェクト
         for bomb in pg.sprite.spritecollide(bird,bombs,True):
             if bird.state == "normal":
                 bird.change_img(8, screen) # こうかとん悲しみエフェクト
@@ -374,7 +390,6 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, shields, True, False).keys():    
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
-        
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
@@ -391,6 +406,8 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        neogravity.update()
+        neogravity.draw(screen)
         shields.update()
         shields.draw(screen)
         pg.display.update()
